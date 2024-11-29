@@ -56,10 +56,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // Control buzzer based on the command
   if (message == "ON") {
-    digitalWrite(buzzerPin, HIGH);
+    tone(buzzerPin, 1200);
     Serial.println("Buzzer ON");
   } else if (message == "OFF") {
-    digitalWrite(buzzerPin, LOW);
+    noTone(buzzerPin);
     Serial.println("Buzzer OFF");
   } else {
     Serial.println("Unknown command");
