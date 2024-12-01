@@ -14,19 +14,21 @@
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-const int ledPin = 10;
-const int buzzerPin = 8;
+const int ledPin = 10; //GPIO10
+const int ledPin1 = 9; //GPIO9
+const int ledPin2 = 20; //GPIO20
+const int buzzerPin = 8; //GPIO8
 
 //This is for simulating of temporary lost WiFi connection.
 //unsigned long startTime = millis();
 //unsigned long disconnectAfter = 10000; // Disconnect after 10 seconds
 
-//Blinking by red if WiFi connection have been lost.
-void blinkLED(int times) {
+//Blinking by red or yellow if WiFi or MQTT connection have been lost.
+void blinkLED(int times, int pin) {
   for (int i = 0; i < times; i++) {
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(pin, HIGH);
     delay(300);
-    digitalWrite(ledPin, LOW);
+    digitalWrite(pin, LOW);
     delay(300);
   }
 }
@@ -37,7 +39,7 @@ void reconnectWiFi() {
   Serial.println("Reconnecting to Wi-Fi...");
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
-    blinkLED(1);
+    blinkLED(1, ledPin);
     delay(1000);
   }
   Serial.println("\nReconnected to Wi-Fi!");
@@ -89,6 +91,10 @@ void setup() {
   digitalWrite(ledPin, LOW);
   pinMode(buzzerPin, OUTPUT);
   digitalWrite(ledPin, LOW);
+  pinMode(ledPin1, OUTPUT);
+  digitalWrite(ledPin1, LOW);
+  pinMode(ledPin2, OUTPUT);
+  digitalWrite(ledPin2, LOW);
 
   Serial.println("Connecting to Wi-Fi...");
   WiFi.begin(wifi_ssid, wifi_password);
@@ -109,18 +115,26 @@ void setup() {
 }
 
 void loop() {
+  if (WiFi.status() == WL_CONNECTED && client.connected()){
+      digitalWrite(ledPin2, HIGH);
+  } else {
+    digitalWrite(ledPin2, LOW);
+  }
+
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Wi-Fi connection lost!");
-    blinkLED(3);
+    blinkLED(3, ledPin);
     reconnectWiFi();
   } else {
     digitalWrite(ledPin, LOW);
   }
 
   if (!client.connected()) {
+    blinkLED(3, ledPin1);
     reconnect_MQTT_broker();
   }
-  client.loop();
+
+   client.loop();
 
   //Test code block for simulating of temporary WiFi connection.
   /*if (millis() - startTime > disconnectAfter) {
