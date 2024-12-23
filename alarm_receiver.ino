@@ -19,6 +19,13 @@ const int ledPin1 = 9; //GPIO9
 const int ledPin2 = 20; //GPIO20
 const int buzzerPin = 8; //GPIO8
 
+bool buzzerActive = false;
+unsigned long previousMillis = 0;
+const int freq1 = 650;
+const int freq2 = 900;
+const int duration = 500;
+bool toggle = true;
+
 //This is for simulating of temporary lost WiFi connection.
 //unsigned long startTime = millis();
 //unsigned long disconnectAfter = 10000; // Disconnect after 10 seconds
@@ -58,10 +65,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // Control buzzer based on the command
   if (message == "ON") {
-    tone(buzzerPin, 1200);
+    buzzerActive = true;
     Serial.println("Buzzer ON");
   } else if (message == "OFF") {
-    noTone(buzzerPin);
+    buzzerActive = false;
     Serial.println("Buzzer OFF");
   } else {
     Serial.println("Unknown command");
@@ -85,7 +92,6 @@ void reconnect_MQTT_broker() {
 
 void setup() {
   Serial.begin(115200);
-  delay(10);
 
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, LOW);
@@ -95,6 +101,9 @@ void setup() {
   digitalWrite(ledPin1, LOW);
   pinMode(ledPin2, OUTPUT);
   digitalWrite(ledPin2, LOW);
+
+  // Initialize LEDC for tone generation
+  ledcAttachPin(buzzerPin, 0); // Attach pin to channel 0 to prevent messages in serial like: "E (30523) ledc: ledc_update_duty(648): LEDC is not initialized, E (30528) ledc: ledc_set_duty(720): LEDC is not initialized"
 
   Serial.println("Connecting to Wi-Fi...");
   WiFi.begin(wifi_ssid, wifi_password);
@@ -135,6 +144,25 @@ void loop() {
   }
 
    client.loop();
+
+  // Non-blocking buzzer frequency cycling
+  // Police siren effect
+  if (buzzerActive) {
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= duration) {
+      previousMillis = currentMillis;
+
+      // Toggle between the two frequencies
+      if (toggle) {
+        tone(buzzerPin, freq1);
+      } else {
+        tone(buzzerPin, freq2);
+      }
+      toggle = !toggle;
+    }
+  } else {
+    noTone(buzzerPin);
+  }
 
   //Test code block for simulating of temporary WiFi connection.
   /*if (millis() - startTime > disconnectAfter) {
