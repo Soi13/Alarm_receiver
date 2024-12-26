@@ -9,7 +9,8 @@
 #define mqtt_user "mqtt_user"
 #define mqtt_password ""
 
-#define alarm_state_topic "homeassistant/sensor/fire_alarm"
+//#define alarm_state_topic_fire "homeassistant/sensor/fire_alarm"
+#define alarm_state_topic_leakage "homeassistant/sensor/leak_detected"
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -80,7 +81,7 @@ void reconnect_MQTT_broker() {
     Serial.print("Connecting to MQTT...");
     if (client.connect("XIAO_ESP32C3_Client", mqtt_user, mqtt_password)) {
       Serial.println("connected");
-      client.subscribe(alarm_state_topic);
+      client.subscribe(alarm_state_topic_leakage);
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
